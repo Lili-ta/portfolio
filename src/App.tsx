@@ -137,14 +137,8 @@ function LiveDotNetSection() {
         This section is powered by a .NET 8 Minimal API. It shows full-stack React + C# in action.
       </p>
       {!API_BASE && (
-        <div className="rounded-xl bg-zinc-100 dark:bg-zinc-700/50 p-4 text-sm text-zinc-700 dark:text-zinc-300">
-          <p className="font-medium mb-2">Run the API locally to see live data:</p>
-          <code className="block rounded-lg bg-zinc-200 dark:bg-zinc-600 px-3 py-2 text-xs">
-            cd backend/Portfolio.Api && dotnet run
-          </code>
-          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            Then set <code className="rounded px-1 bg-zinc-200 dark:bg-zinc-600">VITE_API_URL=http://localhost:5050</code> and restart the dev server. Deploy the API to Azure or Railway and set <code className="rounded px-1 bg-zinc-200 dark:bg-zinc-600">VITE_API_URL</code> in Vercel for production.
-          </p>
+        <div className="rounded-xl bg-zinc-100 dark:bg-zinc-700/50 p-4 text-sm text-zinc-600 dark:text-zinc-400">
+          <p>Live data is loaded from the .NET API. In production it’s already connected. To see it locally, run the API and set <code className="rounded px-1 bg-zinc-200 dark:bg-zinc-600">VITE_API_URL</code> in a <code className="rounded px-1 bg-zinc-200 dark:bg-zinc-600">.env</code> file (see README).</p>
         </div>
       )}
       {API_BASE && loading && (
