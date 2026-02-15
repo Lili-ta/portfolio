@@ -23,7 +23,7 @@ function randomFood(snake: [number, number][]): [number, number] {
 export default function Snake() {
   const [snake, setSnake] = useState<[number, number][]>(INITIAL_SNAKE);
   const [food, setFood] = useState<[number, number]>(() => randomFood(INITIAL_SNAKE));
-  const [dir, setDir] = useState<[number, number]>([1, 0]);
+  const [, setDir] = useState<[number, number]>([1, 0]);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [playing, setPlaying] = useState(false);
