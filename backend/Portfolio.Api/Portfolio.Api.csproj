@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Portfolio.Api</RootNamespace>
+    <AssemblyName>Portfolio.Api</AssemblyName>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+</Project>

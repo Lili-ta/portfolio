@@ -40,9 +40,31 @@ For GitHub Pages you need a correct **base** in Vite so assets load. If your rep
 
 ## Local development
 
-- `npm install`
-- `npm run dev` — start dev server
-- `npm run build` — build for production (output in `dist`)
+**Frontend (React)**  
+- `npm install`  
+- `npm run dev` — dev server at http://localhost:5173  
+- `npm run build` — production build in `dist`  
+
+**Backend (.NET 8 API)**  
+- `cd backend/Portfolio.Api`  
+- `dotnet run` — API at http://localhost:5050 (Swagger at /swagger)  
+- To show **Live from .NET** data on the site: set `VITE_API_URL=http://localhost:5050` in a `.env` file, then restart `npm run dev`.  
+
+**Deploying the .NET API** (optional, for production “Live from .NET”):  
+- **Azure App Service**: Create a Web App (e.g. Linux, .NET 8), deploy from the `backend/Portfolio.Api` folder, then set `VITE_API_URL` in Vercel to your API URL.  
+- **Railway / Fly.io**: Deploy the `backend/Portfolio.Api` project, then set `VITE_API_URL` in Vercel to the deployed API URL.  
+
+### Deploy .NET API to Railway (free tier)
+
+1. Go to [railway.app](https://railway.app) and sign in (e.g. with GitHub).
+2. Click **New Project** → **Deploy from GitHub repo**.
+3. Select your **portfolio** repo and connect it.
+4. Railway will create a service. Open it, then go to **Settings**.
+5. Set **Root Directory** to `backend/Portfolio.Api` (so only the API is built).
+6. Under **Deploy**, leave **Build Command** empty (Railway will detect .NET) or set to `dotnet publish -c Release -o out`. Set **Start Command** to `dotnet out/Portfolio.Api.dll` (or leave blank to use Railway’s default).
+7. In **Variables**, you don’t need to add `PORT` — Railway sets it automatically (the API already uses it).
+8. Go to **Settings** → **Networking** → **Generate Domain** to get a public URL (e.g. `https://portfolio-api-production-xxxx.up.railway.app`).
+9. Copy that URL. In **Vercel** → your portfolio project → **Settings** → **Environment Variables**, add `VITE_API_URL` = your Railway URL (no trailing slash), then redeploy the frontend.
 
 ---
 

@@ -95,6 +95,86 @@ const GAMES = [
   },
 ] as const;
 
+const API_BASE = typeof import.meta.env.VITE_API_URL === "string" && import.meta.env.VITE_API_URL.trim() !== ""
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, "")
+  : null;
+
+type ApiStatus = { service: string; version: string; runtime: string; uptimeSeconds: number };
+type ApiFocus = { focus: string; updated: string };
+
+function LiveDotNetSection() {
+  const [status, setStatus] = useState<ApiStatus | null>(null);
+  const [focus, setFocus] = useState<ApiFocus | null>(null);
+  const [loading, setLoading] = useState(!!API_BASE);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!API_BASE) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setError(false);
+    Promise.all([
+      fetch(`${API_BASE}/api/status`).then((r) => (r.ok ? r.json() : Promise.reject())),
+      fetch(`${API_BASE}/api/focus`).then((r) => (r.ok ? r.json() : Promise.reject())),
+    ])
+      .then(([s, f]) => {
+        if (!cancelled) {
+          setStatus(s as ApiStatus);
+          setFocus(f as ApiFocus);
+        }
+      })
+      .catch(() => { if (!cancelled) setError(true); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  return (
+    <section className="rounded-2xl border bg-white dark:bg-zinc-800 dark:border-zinc-700 p-6 shadow-sm transition-colors">
+      <SectionTitle>Live from .NET</SectionTitle>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+        This section is powered by a .NET 8 Minimal API. It shows full-stack React + C# in action.
+      </p>
+      {!API_BASE && (
+        <div className="rounded-xl bg-zinc-100 dark:bg-zinc-700/50 p-4 text-sm text-zinc-700 dark:text-zinc-300">
+          <p className="font-medium mb-2">Run the API locally to see live data:</p>
+          <code className="block rounded-lg bg-zinc-200 dark:bg-zinc-600 px-3 py-2 text-xs">
+            cd backend/Portfolio.Api && dotnet run
+          </code>
+          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            Then set <code className="rounded px-1 bg-zinc-200 dark:bg-zinc-600">VITE_API_URL=http://localhost:5050</code> and restart the dev server. Deploy the API to Azure or Railway and set <code className="rounded px-1 bg-zinc-200 dark:bg-zinc-600">VITE_API_URL</code> in Vercel for production.
+          </p>
+        </div>
+      )}
+      {API_BASE && loading && (
+        <div className="rounded-xl bg-zinc-100 dark:bg-zinc-700/50 p-4 text-sm text-zinc-600 dark:text-zinc-400">
+          Connecting to API…
+        </div>
+      )}
+      {API_BASE && error && (
+        <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4 text-sm text-amber-800 dark:text-amber-200">
+          Couldn’t reach the API. Make sure it’s running at <code className="break-all">{API_BASE}</code> or deploy it and set <code>VITE_API_URL</code>.
+        </div>
+      )}
+      {API_BASE && status && focus && !error && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-600 p-4">
+            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">API Status</p>
+            <p className="mt-1 font-semibold text-emerald-600 dark:text-emerald-400">{status.service} v{status.version}</p>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{status.runtime}</p>
+            <p className="mt-1 text-xs text-zinc-500">Uptime: {status.uptimeSeconds}s</p>
+          </div>
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-600 p-4">
+            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Current focus</p>
+            <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">&ldquo;{focus.focus}&rdquo;</p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function GamesSection() {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
@@ -232,6 +312,9 @@ export default function App() {
               ))}
             </div>
           </section>
+
+          {/* Live .NET API */}
+          <LiveDotNetSection />
 
           {/* Skills */}
           <section className="rounded-2xl border bg-white dark:bg-zinc-800 dark:border-zinc-700 p-6 shadow-sm transition-colors">
