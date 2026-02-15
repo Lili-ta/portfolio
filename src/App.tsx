@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { profile, projects } from "./data";
+import FunnyChat from "./components/FunnyChat";
 import MemoryMatch from "./games/MemoryMatch";
 import ReactionTime from "./games/ReactionTime";
 import Snake from "./games/Snake";
@@ -354,6 +355,7 @@ export default function App() {
           © {new Date().getFullYear()} {profile.name}
         </footer>
       </div>
+      <FunnyChat />
     </div>
   );
 }

@@ -66,6 +66,16 @@ For GitHub Pages you need a correct **base** in Vite so assets load. If your rep
 8. Go to **Settings** → **Networking** → **Generate Domain** to get a public URL (e.g. `https://portfolio-api-production-xxxx.up.railway.app`).
 9. Copy that URL. In **Vercel** → your portfolio project → **Settings** → **Environment Variables**, add `VITE_API_URL` = your Railway URL (no trailing slash), then redeploy the frontend.
 
+### AI chat (OpenAI)
+
+The floating chat uses **OpenAI** (GPT) via a Vercel serverless function at `/api/chat`. To enable it:
+
+1. Get an API key from [platform.openai.com](https://platform.openai.com/api-keys).
+2. In **Vercel** → your portfolio project → **Settings** → **Environment Variables**, add **`OPENAI_API_KEY`** (value = your key). Mark it **Sensitive** if you like.
+3. Redeploy. The chat will call the API and return real AI replies.
+
+The chat only works when the site is deployed on Vercel (the `/api` route is serverless). For local testing, run `vercel dev` so the API route is available.
+
 ---
 
 ## React + TypeScript + Vite (template notes)
