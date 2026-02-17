@@ -107,6 +107,44 @@ app.MapGet("/api/visit", async () =>
 .WithName("GetVisit")
 .WithTags("Content");
 
+// Highlights (achievements / key points) - stored in MongoDB for a dynamic, impressive portfolio section
+app.MapGet("/api/highlights", async () =>
+{
+    if (string.IsNullOrWhiteSpace(mongoUri))
+        return Results.Json(new { highlights = (object?)null, message = "Database not configured." });
+    try
+    {
+        var client = new MongoClient(mongoUri);
+        var db = client.GetDatabase("portfolio");
+        var collection = db.GetCollection<HighlightsDocument>("content");
+        var doc = await collection.Find(d => d.Id == "highlights").FirstOrDefaultAsync();
+        if (doc == null || doc.Items == null || doc.Items.Count == 0)
+        {
+            var defaultHighlights = new HighlightsDocument
+            {
+                Id = "highlights",
+                Items = new List<HighlightItem>
+                {
+                    new() { Order = 1, Title = "Engineering leadership", Text = "Led engineering teams at PwC and CoinFlip; managed 3 teams and delivery across products." },
+                    new() { Order = 2, Title = "Quality & scale", Text = "Drove 85%+ test coverage and CI/CD at CoinFlip; built reliable systems at JPMorgan." },
+                    new() { Order = 3, Title = "Full-stack", Text = "React, TypeScript, .NET 8, MongoDB — this portfolio is a live example (API on Railway, DB in Atlas)." },
+                    new() { Order = 4, Title = "Finance & compliance", Text = "Experience in fintech and regulated environments (PwC, CoinFlip, JPMorgan)." }
+                }
+            };
+            await collection.InsertOneAsync(defaultHighlights);
+            doc = defaultHighlights;
+        }
+        var list = doc.Items.OrderBy(x => x.Order).Select(x => new { x.Title, x.Text }).ToList();
+        return Results.Json(new { highlights = list, source = "MongoDB" });
+    }
+    catch (Exception ex)
+    {
+        return Results.Json(new { highlights = (object?)null, error = ex.Message }, statusCode: 500);
+    }
+})
+.WithName("GetHighlights")
+.WithTags("Content");
+
 // Lightweight "tech stack" endpoint - showcases API design
 app.MapGet("/api/stack", () => new
 {

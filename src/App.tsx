@@ -103,12 +103,15 @@ const API_BASE = typeof import.meta.env.VITE_API_URL === "string" && import.meta
 type ApiStatus = { service: string; version: string; runtime: string; uptimeSeconds: number };
 type ApiFocus = { focus: string; updated: string };
 type ApiDb = { database: string | null; status: string; type?: string };
+type ApiHighlight = { title: string; text: string };
+type ApiHighlightsResponse = { highlights: ApiHighlight[] | null; source?: string };
 
 function LiveDotNetSection() {
   const [status, setStatus] = useState<ApiStatus | null>(null);
   const [focus, setFocus] = useState<ApiFocus | null>(null);
   const [dbInfo, setDbInfo] = useState<ApiDb | null>(null);
   const [visitCount, setVisitCount] = useState<number | null>(null);
+  const [highlights, setHighlights] = useState<ApiHighlight[] | null>(null);
   const [loading, setLoading] = useState(!!API_BASE);
   const [error, setError] = useState(false);
 
@@ -133,6 +136,10 @@ function LiveDotNetSection() {
             fetch(`${API_BASE}/api/visit`)
               .then((r) => r.ok ? r.json() : null)
               .then((v) => { if (!cancelled && v?.count != null) setVisitCount(v.count); })
+              .catch(() => {});
+            fetch(`${API_BASE}/api/highlights`)
+              .then((r) => r.ok ? r.json() : null)
+              .then((h: ApiHighlightsResponse) => { if (!cancelled && h?.highlights?.length) setHighlights(h.highlights); })
               .catch(() => {});
           }
         }
@@ -185,6 +192,22 @@ function LiveDotNetSection() {
               )}
             </div>
           )}
+        </div>
+      )}
+      {API_BASE && !error && highlights && highlights.length > 0 && (
+        <div className="mt-6 rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-900/10 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <p className="text-xs font-medium text-violet-600 dark:text-violet-400 uppercase tracking-wider">Key highlights</p>
+            <span className="rounded-full bg-violet-200 dark:bg-violet-800 text-violet-800 dark:text-violet-200 text-[10px] font-medium px-2 py-0.5">from MongoDB</span>
+          </div>
+          <ul className="space-y-3">
+            {highlights.map((h, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="text-violet-500 dark:text-violet-400 font-semibold text-sm shrink-0">{h.title}</span>
+                <span className="text-sm text-zinc-600 dark:text-zinc-400">{h.text}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </section>
