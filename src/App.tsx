@@ -102,10 +102,13 @@ const API_BASE = typeof import.meta.env.VITE_API_URL === "string" && import.meta
 
 type ApiStatus = { service: string; version: string; runtime: string; uptimeSeconds: number };
 type ApiFocus = { focus: string; updated: string };
+type ApiDb = { database: string | null; status: string; type?: string };
 
 function LiveDotNetSection() {
   const [status, setStatus] = useState<ApiStatus | null>(null);
   const [focus, setFocus] = useState<ApiFocus | null>(null);
+  const [dbInfo, setDbInfo] = useState<ApiDb | null>(null);
+  const [visitCount, setVisitCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(!!API_BASE);
   const [error, setError] = useState(false);
 
@@ -119,11 +122,19 @@ function LiveDotNetSection() {
     Promise.all([
       fetch(`${API_BASE}/api/status`).then((r) => (r.ok ? r.json() : Promise.reject())),
       fetch(`${API_BASE}/api/focus`).then((r) => (r.ok ? r.json() : Promise.reject())),
+      fetch(`${API_BASE}/api/db`).then((r) => (r.ok ? r.json() : Promise.reject())),
     ])
-      .then(([s, f]) => {
+      .then(([s, f, d]) => {
         if (!cancelled) {
           setStatus(s as ApiStatus);
           setFocus(f as ApiFocus);
+          setDbInfo(d as ApiDb);
+          if ((d as ApiDb).database === "MongoDB") {
+            fetch(`${API_BASE}/api/visit`)
+              .then((r) => r.ok ? r.json() : null)
+              .then((v) => { if (!cancelled && v?.count != null) setVisitCount(v.count); })
+              .catch(() => {});
+          }
         }
       })
       .catch(() => { if (!cancelled) setError(true); })
@@ -153,7 +164,7 @@ function LiveDotNetSection() {
         </div>
       )}
       {API_BASE && status && focus && !error && (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-xl border border-zinc-200 dark:border-zinc-600 p-4">
             <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">API Status</p>
             <p className="mt-1 font-semibold text-emerald-600 dark:text-emerald-400">{status.service} v{status.version}</p>
@@ -164,6 +175,16 @@ function LiveDotNetSection() {
             <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Current focus</p>
             <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">&ldquo;{focus.focus}&rdquo;</p>
           </div>
+          {dbInfo?.database && (
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-600 p-4">
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Database</p>
+              <p className="mt-1 font-semibold text-violet-600 dark:text-violet-400">{dbInfo.database} (NoSQL)</p>
+              <p className="mt-1 text-xs text-zinc-500">Focus &amp; stats stored in MongoDB</p>
+              {visitCount != null && (
+                <p className="mt-1 text-xs text-zinc-500">Page visits (from DB): {visitCount}</p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </section>

@@ -16,12 +16,31 @@ dotnet run
 | Method | Path         | Description                          |
 |--------|--------------|--------------------------------------|
 | GET    | /api/status  | Service name, version, .NET runtime, uptime |
-| GET    | /api/focus   | Current focus message (from appsettings)    |
-| GET    | /api/stack   | Backend tech stack                        |
+| GET    | /api/focus   | Current focus (from MongoDB if `MONGODB_URI` set, else appsettings) |
+| GET    | /api/db      | Database info (MongoDB/NoSQL when connected) |
+| GET    | /api/visit   | Increments visit count in MongoDB (demonstrates NoSQL write) |
+| GET    | /api/stack   | Backend tech stack (includes DB when configured) |
+
+## MongoDB (NoSQL)
+
+When `MONGODB_URI` is set, the API uses **MongoDB** for:
+
+- **Focus** – Stored in `portfolio.settings`; the "Current focus" in the Live from .NET section is read from the database.
+- **Visit count** – Stored in `portfolio.stats`; each call to `/api/visit` increments a counter (demonstrates read/write with NoSQL).
+
+**Setup (free tier):**
+
+1. Create a cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas) (free M0).
+2. Create a database user and get the connection string (e.g. `mongodb+srv://user:pass@cluster.mongodb.net/`).
+3. **Locally:** set `MONGODB_URI` in environment or `appsettings.Development.json`.
+4. **Railway:** Project → your API service → Variables → add `MONGODB_URI` = your Atlas connection string.
+
+The portfolio "Live from .NET" section will then show a **Database: MongoDB (NoSQL)** card and optional visit count.
 
 ## Configuration
 
-Edit `appsettings.json` → `Focus:Current` to change the message shown in the portfolio.
+- **Without MongoDB:** Edit `appsettings.json` → `Focus:Current` to change the focus message.
+- **With MongoDB:** Focus is stored in the database; you can update it by inserting/updating the document in `portfolio.settings` (e.g. via Atlas UI or a small admin endpoint).
 
 ## Deploy (Azure, Railway, etc.)
 

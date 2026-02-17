@@ -11,7 +11,7 @@ export type Project = {
     title: "Full-Stack Engineer (Frontend-Focused)",
     tagline: "React 18 • TypeScript • .NET 8 • Azure • Test Automation",
     location: "Tampa, FL",
-    email: "leylitahmasebi@email.com",
+    email: "leylitahmasebi@gmail.com",
     github: "https://github.com/Lili-ta",
     linkedin: "https://linkedin.com/in/leylitahmasebi",
     resumeUrl: "/resume.pdf", // put resume.pdf in /public
