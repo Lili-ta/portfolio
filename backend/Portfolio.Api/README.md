@@ -39,8 +39,12 @@ The portfolio "Live from .NET" section will then show a **Database: MongoDB (NoS
 
 **If you get SSL handshake errors** (e.g. in Docker/Railway):
 
-- **Connection string:** In Atlas → Connect → Drivers, copy the **standard** connection string (not only SRV). Ensure the password is [URL-encoded](https://www.w3schools.com/tags/ref_urlencode.asp) if it contains `@`, `#`, `:`, etc.
-- **Test:** After deploy, open `https://YOUR-API-URL/api/db/test`. If it returns `"ok": false` with an SSL error, try adding an env var on Railway: **`MONGODB_INSECURE_TLS`** = **`true`**. This relaxes TLS certificate checks and can fix handshake failures in some environments (use only if needed).
+1. **Try Stable API:** The app now sets `ServerApi = ServerApiVersion.V1` (Atlas-recommended). Redeploy and test `/api/db/test`.
+2. **Try standard URI instead of SRV:** Some environments fail with `mongodb+srv://`. Use a **standard** URI with the same hosts. From your cluster the hosts are in the error (e.g. `ac-5mfdkur-shard-00-00.xwownux.mongodb.net:27017`). Set `MONGODB_URI` to:
+   `mongodb://USERNAME:PASSWORD@ac-5mfdkur-shard-00-00.xwownux.mongodb.net:27017,ac-5mfdkur-shard-00-01.xwownux.mongodb.net:27017,ac-5mfdkur-shard-00-02.xwownux.mongodb.net:27017/?tls=true&authSource=admin`
+   Replace `USERNAME` and `PASSWORD` with your Atlas DB user; URL-encode the password if it has special characters.
+3. **Relax TLS (if still failing):** On Railway add **`MONGODB_INSECURE_TLS`** = **`true`**, then redeploy.
+4. **Test:** Open `https://YOUR-API-URL/api/db/test` to confirm connectivity.
 
 ## Configuration
 

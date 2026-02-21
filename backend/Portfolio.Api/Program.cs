@@ -34,6 +34,8 @@ MongoClient? CreateMongoClient()
 {
     if (string.IsNullOrWhiteSpace(mongoUri)) return null;
     var settings = MongoClientSettings.FromConnectionString(mongoUri);
+    // Atlas-recommended: use Stable API (can improve compatibility with Atlas)
+    settings.ServerApi = new ServerApi(ServerApiVersion.V1);
     settings.ServerSelectionTimeout = TimeSpan.FromSeconds(15);
     settings.ConnectTimeout = TimeSpan.FromSeconds(10);
     if (!settings.UseTls) settings.UseTls = true;
