@@ -76,6 +76,13 @@ The floating chat uses **OpenAI** (GPT) via a Vercel serverless function at `/ap
 
 The chat only works when the site is deployed on Vercel (the `/api` route is serverless). For local testing, run `vercel dev` so the API route is available.
 
+### MongoDB (visit count & highlights) — Vercel workaround
+
+If the .NET API on Railway cannot connect to MongoDB Atlas (e.g. SSL handshake errors), the site can use **Vercel serverless functions** instead to read/write MongoDB. The Node.js driver works with Atlas from Vercel.
+
+1. In **Vercel** → your portfolio project → **Settings** → **Environment Variables**, add **`MONGODB_URI`** = your Atlas connection string (same as in Railway).
+2. Redeploy the frontend. The "Live from .NET" section will still show API status and focus from Railway; the **Database** card, **Page visits**, and **Key highlights** will be loaded from MongoDB via Vercel (`/api/db`, `/api/visit`, `/api/highlights`).
+
 ---
 
 ## React + TypeScript + Vite (template notes)

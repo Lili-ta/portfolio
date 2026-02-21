@@ -122,26 +122,33 @@ function LiveDotNetSection() {
     }
     let cancelled = false;
     setError(false);
+    // Fetch status and focus from .NET API (Railway); db can come from Railway or Vercel (Node avoids TLS issues with Atlas)
+    const vercelDbPromise = fetch("/api/db").then((r) => (r.ok ? r.json() : null)).catch(() => null);
     Promise.all([
       fetch(`${API_BASE}/api/status`).then((r) => (r.ok ? r.json() : Promise.reject())),
       fetch(`${API_BASE}/api/focus`).then((r) => (r.ok ? r.json() : Promise.reject())),
-      fetch(`${API_BASE}/api/db`).then((r) => (r.ok ? r.json() : Promise.reject())),
+      fetch(`${API_BASE}/api/db`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      vercelDbPromise,
     ])
-      .then(([s, f, d]) => {
-        if (!cancelled) {
-          setStatus(s as ApiStatus);
-          setFocus(f as ApiFocus);
-          setDbInfo(d as ApiDb);
-          if ((d as ApiDb).database === "MongoDB") {
-            fetch(`${API_BASE}/api/visit`)
-              .then((r) => r.ok ? r.json() : null)
-              .then((v) => { if (!cancelled && v?.count != null) setVisitCount(v.count); })
-              .catch(() => {});
-            fetch(`${API_BASE}/api/highlights`)
-              .then((r) => r.ok ? r.json() : null)
-              .then((h: ApiHighlightsResponse) => { if (!cancelled && h?.highlights?.length) setHighlights(h.highlights); })
-              .catch(() => {});
-          }
+      .then(([s, f, railDb, vercelDb]) => {
+        if (cancelled) return;
+        setStatus(s as ApiStatus);
+        setFocus(f as ApiFocus);
+        const db = (vercelDb as ApiDb | null)?.database === "MongoDB" ? (vercelDb as ApiDb) : (railDb as ApiDb | null);
+        setDbInfo(db ?? null);
+        const mongoBase = (vercelDb as ApiDb | null)?.database === "MongoDB" ? "" : API_BASE;
+        if (db?.database === "MongoDB" && mongoBase !== null) {
+          const base = mongoBase || "";
+          const visitUrl = base ? `${base}/api/visit` : "/api/visit";
+          const highlightsUrl = base ? `${base}/api/highlights` : "/api/highlights";
+          fetch(visitUrl)
+            .then((r) => r.ok ? r.json() : null)
+            .then((v) => { if (!cancelled && v?.count != null) setVisitCount(v.count); })
+            .catch(() => {});
+          fetch(highlightsUrl)
+            .then((r) => r.ok ? r.json() : null)
+            .then((h: ApiHighlightsResponse) => { if (!cancelled && h?.highlights?.length) setHighlights(h.highlights); })
+            .catch(() => {});
         }
       })
       .catch(() => { if (!cancelled) setError(true); })
@@ -210,6 +217,39 @@ function LiveDotNetSection() {
           </ul>
         </div>
       )}
+    </section>
+  );
+}
+
+function NodeIntegrationSection() {
+  const endpoints = ["/api/db", "/api/visit", "/api/highlights"];
+  return (
+    <section className="rounded-2xl border bg-white dark:bg-zinc-800 dark:border-zinc-700 p-6 shadow-sm transition-colors">
+      <SectionTitle>Node Integration</SectionTitle>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+        This portfolio also uses Node.js serverless functions on Vercel to power MongoDB-backed features and API fallbacks.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-zinc-200 dark:border-zinc-600 p-4">
+          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">What I built</p>
+          <ul className="mt-2 text-sm text-zinc-700 dark:text-zinc-300 list-disc ml-5 space-y-1">
+            <li>Node.js API routes for database status, visit tracking, and portfolio highlights.</li>
+            <li>MongoDB integration for persistent counters and dynamic content.</li>
+            <li>Fallback strategy between .NET API and Node endpoints for higher resiliency.</li>
+          </ul>
+        </div>
+        <div className="rounded-xl border border-zinc-200 dark:border-zinc-600 p-4">
+          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Endpoints</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {endpoints.map((endpoint) => (
+              <Badge key={endpoint} text={endpoint} />
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+            Stack: Node.js, Vercel Functions, MongoDB, TypeScript-friendly frontend integration.
+          </p>
+        </div>
+      </div>
     </section>
   );
 }
@@ -355,6 +395,9 @@ export default function App() {
           {/* Live .NET API */}
           <LiveDotNetSection />
 
+          {/* Node Integration */}
+          <NodeIntegrationSection />
+
           {/* Skills */}
           <section className="rounded-2xl border bg-white dark:bg-zinc-800 dark:border-zinc-700 p-6 shadow-sm transition-colors">
             <SectionTitle>Skills</SectionTitle>
@@ -365,7 +408,7 @@ export default function App() {
               </div>
               <div>
                 <p className="font-medium dark:text-zinc-200">Backend</p>
-                <p className="text-sm text-zinc-700 dark:text-zinc-400 mt-1">C#, .NET (Minimal API/Web API), REST, Swagger</p>
+                <p className="text-sm text-zinc-700 dark:text-zinc-400 mt-1">Node.js, Express, C#, .NET (Minimal API/Web API), REST, Swagger</p>
               </div>
               <div>
                 <p className="font-medium dark:text-zinc-200">Python</p>
