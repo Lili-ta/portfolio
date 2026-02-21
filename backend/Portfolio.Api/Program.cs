@@ -40,11 +40,11 @@ MongoClient? CreateMongoClient()
     // Force TLS 1.2/1.3 only — avoids handshake failures with Atlas in some Docker/OpenSSL environments
     settings.SslSettings ??= new SslSettings();
     settings.SslSettings.EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
-    // Optional: relax TLS cert validation (set MONGODB_INSECURE_TLS=true only if SSL still fails; not for production secrets)
+    // Optional: relax TLS cert validation (set MONGODB_INSECURE_TLS=true only if SSL still fails)
     if (string.Equals(Environment.GetEnvironmentVariable("MONGODB_INSECURE_TLS"), "true", StringComparison.OrdinalIgnoreCase))
     {
         settings.AllowInsecureTls = true;
-        settings.SslSettings.CheckCertificateRevocation = true; // required when AllowInsecureTls is true
+        settings.SslSettings.CheckCertificateRevocation = false; // must be false when AllowInsecureTls is true
     }
     return new MongoClient(settings);
 }
