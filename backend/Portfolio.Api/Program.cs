@@ -1,6 +1,9 @@
 using MongoDB.Driver;
 using Portfolio.Api.Models;
 
+// Prefer TLS 1.2+ for outbound connections (helps MongoDB Atlas SSL handshake in some environments)
+System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12 | System.Net.SecurityProtocolType.Tls13;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Railway (and similar hosts) inject PORT; use it so the app listens on the right port
@@ -24,6 +27,19 @@ app.UseCors();
 var startTime = DateTime.UtcNow;
 var mongoUri = Environment.GetEnvironmentVariable("MONGODB_URI");
 
+// Shared MongoDB client with explicit TLS and shorter timeout (avoids 30s hang; helps with Atlas SSL)
+MongoClient? CreateMongoClient()
+{
+    if (string.IsNullOrWhiteSpace(mongoUri)) return null;
+    var settings = MongoClientSettings.FromConnectionString(mongoUri);
+    settings.ServerSelectionTimeout = TimeSpan.FromSeconds(15);
+    settings.ConnectTimeout = TimeSpan.FromSeconds(10);
+    if (!settings.UseTls) settings.UseTls = true;
+    return new MongoClient(settings);
+}
+Lazy<MongoClient?> lazyMongo = new Lazy<MongoClient?>(CreateMongoClient);
+MongoClient? Mongo() => lazyMongo.Value;
+
 // Health & status - proves the API is live and shows .NET stack
 app.MapGet("/api/status", () => new
 {
@@ -44,7 +60,8 @@ app.MapGet("/api/focus", async (IConfiguration config) =>
     {
         try
         {
-            var client = new MongoClient(mongoUri);
+            var client = Mongo();
+            if (client == null) throw new InvalidOperationException("Mongo client not configured");
             var db = client.GetDatabase("portfolio");
             var collection = db.GetCollection<FocusDocument>("settings");
             var doc = await collection.Find(d => d.Id == "focus").FirstOrDefaultAsync();
@@ -75,6 +92,26 @@ app.MapGet("/api/db", () => Results.Ok(string.IsNullOrWhiteSpace(mongoUri)
 .WithName("GetDb")
 .WithTags("Status");
 
+// Test actual MongoDB connectivity (use this to see why live data might not show)
+app.MapGet("/api/db/test", async () =>
+{
+    if (string.IsNullOrWhiteSpace(mongoUri))
+        return Results.Json(new { ok = false, error = "MONGODB_URI is not set on the server (e.g. Railway). Add it in your project Variables." });
+    try
+    {
+        var client = Mongo();
+        if (client == null) return Results.Json(new { ok = false, error = "Mongo client not configured." });
+        await client.ListDatabaseNamesAsync();
+        return Results.Json(new { ok = true, message = "MongoDB cluster is reachable." });
+    }
+    catch (Exception ex)
+    {
+        return Results.Json(new { ok = false, error = ex.Message });
+    }
+})
+.WithName("GetDbTest")
+.WithTags("Status");
+
 // Visit count - demonstrates write to NoSQL (increments a counter in MongoDB)
 app.MapGet("/api/visit", async () =>
 {
@@ -82,7 +119,8 @@ app.MapGet("/api/visit", async () =>
         return Results.Json(new { count = (long?)null, message = "Database not configured." });
     try
     {
-        var client = new MongoClient(mongoUri);
+        var client = Mongo();
+        if (client == null) return Results.Json(new { count = (long?)null, message = "Database not configured." });
         var db = client.GetDatabase("portfolio");
         var collection = db.GetCollection<VisitCountDocument>("stats");
         var filter = Builders<VisitCountDocument>.Filter.Eq(d => d.Id, "site");
@@ -114,7 +152,8 @@ app.MapGet("/api/highlights", async () =>
         return Results.Json(new { highlights = (object?)null, message = "Database not configured." });
     try
     {
-        var client = new MongoClient(mongoUri);
+        var client = Mongo();
+        if (client == null) return Results.Json(new { highlights = (object?)null, message = "Database not configured." });
         var db = client.GetDatabase("portfolio");
         var collection = db.GetCollection<HighlightsDocument>("content");
         var doc = await collection.Find(d => d.Id == "highlights").FirstOrDefaultAsync();
