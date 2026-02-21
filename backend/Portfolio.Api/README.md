@@ -37,6 +37,11 @@ When `MONGODB_URI` is set, the API uses **MongoDB** for:
 
 The portfolio "Live from .NET" section will then show a **Database: MongoDB (NoSQL)** card and optional visit count.
 
+**If you get SSL handshake errors** (e.g. in Docker/Railway):
+
+- **Connection string:** In Atlas → Connect → Drivers, copy the **standard** connection string (not only SRV). Ensure the password is [URL-encoded](https://www.w3schools.com/tags/ref_urlencode.asp) if it contains `@`, `#`, `:`, etc.
+- **Test:** After deploy, open `https://YOUR-API-URL/api/db/test`. If it returns `"ok": false` with an SSL error, try adding an env var on Railway: **`MONGODB_INSECURE_TLS`** = **`true`**. This relaxes TLS certificate checks and can fix handshake failures in some environments (use only if needed).
+
 ## Configuration
 
 - **Without MongoDB:** Edit `appsettings.json` → `Focus:Current` to change the focus message.

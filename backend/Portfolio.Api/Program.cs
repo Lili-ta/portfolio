@@ -1,3 +1,5 @@
+using System.Net.Security;
+using System.Security.Authentication;
 using MongoDB.Driver;
 using Portfolio.Api.Models;
 
@@ -35,6 +37,15 @@ MongoClient? CreateMongoClient()
     settings.ServerSelectionTimeout = TimeSpan.FromSeconds(15);
     settings.ConnectTimeout = TimeSpan.FromSeconds(10);
     if (!settings.UseTls) settings.UseTls = true;
+    // Force TLS 1.2/1.3 only — avoids handshake failures with Atlas in some Docker/OpenSSL environments
+    settings.SslSettings ??= new SslSettings();
+    settings.SslSettings.EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+    // Optional: relax TLS cert validation (set MONGODB_INSECURE_TLS=true only if SSL still fails; not for production secrets)
+    if (string.Equals(Environment.GetEnvironmentVariable("MONGODB_INSECURE_TLS"), "true", StringComparison.OrdinalIgnoreCase))
+    {
+        settings.AllowInsecureTls = true;
+        settings.SslSettings.CheckCertificateRevocation = true; // required when AllowInsecureTls is true
+    }
     return new MongoClient(settings);
 }
 Lazy<MongoClient?> lazyMongo = new Lazy<MongoClient?>(CreateMongoClient);
