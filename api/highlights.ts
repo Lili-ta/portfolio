@@ -34,7 +34,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const highlights = doc.Items.sort((a, b) => a.Order - b.Order).map(({ Title, Text }) => ({ title: Title, text: Text }));
     return res.status(200).json({ highlights, source: "MongoDB" });
   } catch (err) {
-    console.error("MongoDB highlights error:", err);
-    return res.status(500).json({ highlights: null, error: err instanceof Error ? err.message : "Database error" });
+    const message = err instanceof Error ? err.message : "Database error";
+    console.error("MongoDB highlights error:", message);
+    return res.status(500).json({ highlights: null, error: message });
   }
 }

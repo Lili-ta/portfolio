@@ -80,8 +80,20 @@ The chat only works when the site is deployed on Vercel (the `/api` route is ser
 
 If the .NET API on Railway cannot connect to MongoDB Atlas (e.g. SSL handshake errors), the site can use **Vercel serverless functions** instead to read/write MongoDB. The Node.js driver works with Atlas from Vercel.
 
-1. In **Vercel** → your portfolio project → **Settings** → **Environment Variables**, add **`MONGODB_URI`** = your Atlas connection string (same as in Railway).
+1. In **Vercel** → your portfolio project → **Settings** → **Environment Variables**, add **`MONGODB_URI`** = your Atlas connection string.
 2. Redeploy the frontend. The "Live from .NET" section will still show API status and focus from Railway; the **Database** card, **Page visits**, and **Key highlights** will be loaded from MongoDB via Vercel (`/api/db`, `/api/visit`, `/api/highlights`).
+
+**Connection string tips (for Vercel):**
+
+- **Prefer the SRV string from Atlas** (Node works with it; no SSL issues):  
+  `mongodb+srv://USERNAME:PASSWORD@cluster0.xwownux.mongodb.net/?retryWrites=true&w=majority`  
+  Replace `<password>` with your actual password. If the password has `@`, `#`, `:`, etc., [URL-encode](https://www.w3schools.com/tags/ref_urlencode.asp) it (e.g. `@` → `%40`).
+
+- **If you use the standard (non-SRV) URI** with multiple hosts, add the **replica set name** from Atlas. In Atlas: **Connect** → **Drivers** → copy the connection string; some flows show `replicaSet=atlasxxxxx`. Your URI should look like:  
+  `mongodb://USER:PASS@host1:27017,host2:27017,host3:27017/?tls=true&authSource=admin&replicaSet=REPLICA_SET_NAME`  
+  Use the exact replica set name from your cluster (e.g. from the Atlas UI or the SRV host).
+
+- **No spaces or newlines** in the env var. If you get a 500, open the failing URL (e.g. your-site.vercel.app/api/visit) and check the JSON `error` field for the real message (e.g. authentication failed, replica set name required).
 
 ---
 

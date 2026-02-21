@@ -24,7 +24,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const count = result?.Count ?? 0;
     return res.status(200).json({ count, database: "MongoDB" });
   } catch (err) {
-    console.error("MongoDB visit error:", err);
-    return res.status(500).json({ error: err instanceof Error ? err.message : "Database error" });
+    const message = err instanceof Error ? err.message : "Database error";
+    console.error("MongoDB visit error:", message);
+    return res.status(500).json({ error: message });
   }
 }
